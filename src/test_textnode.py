@@ -20,7 +20,7 @@ class TestTextNode(unittest.TestCase):
         self.assertEqual(node, node2)
 
     def test_no_url(self):
-        node = TextNode("No URL text", TextType.PLAIN)
+        node = TextNode("No URL text", TextType.TEXT)
         self.assertIsNone(node.url)
 
     def test_url_eq(self):
