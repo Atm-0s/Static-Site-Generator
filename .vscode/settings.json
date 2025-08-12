@@ -1,13 +1,3 @@
 {
-    "editor.quickSuggestions": {
-        "other": false,
-        "comments": false,
-        "strings": false
-    },
-    "editor.suggestOnTriggerCharacters": false,
-    "editor.suggest.showWords": false,
-    "editor.suggest.showFunctions": false,
-    "editor.suggest.showVariables": false,
-    "editor.suggest.showModules": false,
-    "editor.suggest.showSnippets": false
+    "python.REPL.enableREPLSmartSend": false
 }
