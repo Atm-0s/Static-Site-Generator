@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
+import os
+import shutil
+from conversions import *
 
-from textnode import TextNode, TextType
 
 def main():
-    textnode = TextNode("Dummy text", TextType.PLAIN)
-    print(textnode)
+    source_directory = os.path.relpath("./static")
+    target_directory = os.path.relpath("./public")
+    if os.path.exists(target_directory):
+        shutil.rmtree("./public")
+    os.mkdir("./public")
+    return copy_files_recursion(source_directory, target_directory)
+
+
 
 if __name__ == "__main__":
     main()

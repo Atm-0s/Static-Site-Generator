@@ -1,7 +1,9 @@
 from textnode import TextType, TextNode
-from htmlnode import LeafNode
+from htmlnode import LeafNode, ParentNode
 from blocktype import BlockType
 import re
+import os
+import shutil
 
 def text_node_to_html_node(text_node: TextNode):
     def simple_leaf(tag=None):
@@ -149,3 +151,135 @@ def block_to_block_type(block):
         return BlockType.ORDERED_LIST
 
     return BlockType.PARAGRAPH
+
+def markdown_to_html_node(markdown):
+    block_list = markdown_to_blocks(markdown)
+
+    def block_to_block_type_dict(block_list):
+        block_type_dict = {}
+        for block in block_list:
+            block_type_dict[block] = block_to_block_type(block)
+        return block_type_dict
+
+    def create_child_list(block):
+        text_nodes = text_to_textnodes(block)
+        html_child_list = []
+        for text_node in text_nodes:
+            html_node = text_node_to_html_node(text_node)
+            html_child_list.append(html_node)
+        return html_child_list
+
+    def create_para_parent(html_child_list):
+        node = ParentNode("p", html_child_list)
+        return node
+
+    def create_heading_parent(html_child_list, level):
+        node = ParentNode(f"h{level}", html_child_list)
+        return node
+
+    def create_code_parent(html_leaf_node):
+        code_parent = ParentNode("code", [html_leaf_node])
+        pre_parent = ParentNode("pre", [code_parent])
+        return pre_parent
+
+    def create_ordered_parent(list_items):
+        li_nodes = []
+        for item_text in list_items:
+            item_children = create_child_list(item_text)
+            li_node = ParentNode("li", item_children)
+            li_nodes.append(li_node)
+        ol_node = ParentNode("ol", li_nodes)
+        return ol_node
+
+    def create_unordered_parent(list_items):
+        li_nodes = []
+        for item_text in list_items:
+            item_children = create_child_list(item_text)
+            li_node = ParentNode("li", item_children)
+            li_nodes.append(li_node)
+        ul_node = ParentNode("ul", li_nodes)
+        return ul_node
+
+    def create_quote_parent(html_child_list):
+        node = ParentNode("blockquote", html_child_list)
+        return node
+
+    def listify(block):
+        lines = block.split("\n")
+        list_lines = []
+        for line in lines:
+            if line.startswith("-"):
+                list_lines.append(line[2:])
+            else:
+                parts = line.split(". ", 1)
+                list_lines.append(parts[1])
+        return list_lines
+
+    html_node_blocks=[]
+
+
+
+    block_type_dict = block_to_block_type_dict(block_list)
+    for block, block_type in block_type_dict.items():
+        if block_type == BlockType.CODE:
+            code_content = block[4:-3]
+            node = TextNode(code_content, TextType.TEXT)
+            html_node = text_node_to_html_node(node)
+            html_node_blocks.append(create_code_parent(html_node))
+
+        elif block_type == BlockType.HEADING:
+            if block.startswith("#"):
+                count = 0
+                for char in block:
+                    if char == "#":
+                        count += 1
+                    else:
+                        break
+                heading_text = block[count:].strip()
+                heading_children = create_child_list(heading_text)
+                heading_node = create_heading_parent(heading_children, count)
+                html_node_blocks.append(heading_node)
+
+        elif block_type == BlockType.PARAGRAPH:
+            lines = block.split("\n")
+            paragraph = " ".join(lines)
+            para_children = create_child_list(paragraph)
+            para_node = create_para_parent(para_children)
+            html_node_blocks.append(para_node)
+
+        elif block_type == BlockType.QUOTE:
+            lines = block.split("\n")
+            quote_lines = []
+            for line in lines:
+                quote_lines.append(line[2:])
+            quote_content = "\n".join(quote_lines)
+            quote_children = create_child_list(quote_content)
+            quote_node = create_quote_parent(quote_children)
+            html_node_blocks.append(quote_node)
+
+        elif block_type == BlockType.ORDERED_LIST:
+            list_items = listify(block)
+            ol_node = create_ordered_parent(list_items)
+            html_node_blocks.append(ol_node)
+
+        elif block_type == BlockType.UNORDERED_LIST:
+            list_items = listify(block)
+            ul_node = create_unordered_parent(list_items)
+            html_node_blocks.append(ul_node)
+
+    div_node = ParentNode("div", html_node_blocks)
+    return div_node
+
+def copy_files_recursion(source_directory, target_directory):
+    source_list = os.listdir(source_directory)
+    for item in source_list:
+        from_path = os.path.join(source_directory, item)
+        dest_path = os.path.join(target_directory, item)
+        if os.path.isfile(from_path):
+            shutil.copy(from_path, dest_path)
+            print(f"Copying {from_path} to {dest_path}")
+        if os.path.isdir(from_path):
+            if not os.path.isdir(dest_path):
+                os.mkdir(dest_path)
+                print(f"Creating directory {dest_path}")
+            copy_files_recursion(from_path, dest_path)
