@@ -1,5 +1,6 @@
 from textnode import TextType, TextNode
 from htmlnode import LeafNode
+from blocktype import BlockType
 import re
 
 def text_node_to_html_node(text_node: TextNode):
@@ -101,3 +102,50 @@ def text_to_textnodes(text):
     new_nodes = split_nodes_link(new_nodes)
     return new_nodes
 
+def markdown_to_blocks(markdown):
+    block_list = markdown.split("\n\n")
+    processed_blocks = []
+    for block in block_list:
+        stripped_block = block.strip()
+        if stripped_block != "":
+            processed_blocks.append(stripped_block)
+
+    return processed_blocks
+
+def block_to_block_type(block):
+    if block.startswith(("# ", "## ", "### ", "#### ", "##### ", "###### ")):
+        return BlockType.HEADING
+
+    if block.startswith("```") and block.endswith("```"):
+        return BlockType.CODE
+
+    split_by_line = block.split("\n")
+
+    boolean_list = []
+    for line in split_by_line:
+        if line.startswith(">"):
+            boolean_list.append(True)
+        else:
+            boolean_list.append(False)
+    if all(boolean_list):
+        return BlockType.QUOTE
+
+    boolean_list = []
+    for line in split_by_line:
+        if line.startswith("- "):
+            boolean_list.append(True)
+        else:
+            boolean_list.append(False)
+    if all(boolean_list):
+        return BlockType.UNORDERED_LIST
+
+    boolean_list = []
+    for i, line in enumerate(split_by_line):
+        if line.startswith(f"{i+1}. "):
+            boolean_list.append(True)
+        else:
+            boolean_list.append(False)
+    if all(boolean_list):
+        return BlockType.ORDERED_LIST
+
+    return BlockType.PARAGRAPH

@@ -1,5 +1,6 @@
 import unittest
-from conversions import text_node_to_html_node, split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes
+from conversions import text_node_to_html_node, split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes, block_to_block_type
+from blocktype import BlockType
 from textnode import TextNode, TextType
 
 class TestConversionFunctions(unittest.TestCase):
@@ -142,3 +143,49 @@ class TestConversionFunctions(unittest.TestCase):
             ],
             node
         )
+
+        def test_markdown_to_blocks(self):
+            md = """
+This is **bolded** paragraph
+
+This is another paragraph with _italic_ text and `code` here
+This is the same paragraph on a new line
+
+- This is a list
+- with items
+"""
+            blocks = markdown_to_blocks(md)
+            self.assertEqual(
+                blocks,
+                [
+                    "This is **bolded** paragraph",
+                    "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+                    "- This is a list\n- with items",
+                ],
+            )
+
+
+    def test_block_to_block_types(self):
+        # Test a heading
+        block = "# This is a Heading"
+        self.assertEqual(block_to_block_type(block), BlockType.HEADING)
+
+        # Test a code block
+        block = "```\nprint('Hello, World!')\n```"
+        self.assertEqual(block_to_block_type(block), BlockType.CODE)
+
+        # Test a quote block
+        block = "> This is a quote.\n> It spans multiple lines."
+        self.assertEqual(block_to_block_type(block), BlockType.QUOTE)
+
+        # Test an unordered list
+        block = "- Item one\n- Item two"
+        self.assertEqual(block_to_block_type(block), BlockType.UNORDERED_LIST) # Note: The solution file uses BlockType.ULIST
+
+        # Test an ordered list
+        block = "1. First item\n2. Second item"
+        self.assertEqual(block_to_block_type(block), BlockType.ORDERED_LIST) # Note: The solution file uses BlockType.OLIST
+
+        # Test a paragraph
+        block = "This is a regular paragraph of text."
+        self.assertEqual(block_to_block_type(block), BlockType.PARAGRAPH)
