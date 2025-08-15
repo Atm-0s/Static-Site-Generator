@@ -1,5 +1,5 @@
 from textnode import TextType, TextNode
-from htmlnode import LeafNode, ParentNode
+from htmlnode import LeafNode, ParentNode, HTMLNode
 from blocktype import BlockType
 import re
 import os
@@ -283,3 +283,42 @@ def copy_files_recursion(source_directory, target_directory):
                 os.mkdir(dest_path)
                 print(f"Creating directory {dest_path}")
             copy_files_recursion(from_path, dest_path)
+
+def extract_title(markdown):
+    md_lines = markdown.split("\n")
+    for line in md_lines:
+        if line.startswith("# "):
+            header = line.strip("# ")
+            return header
+    raise ValueError("No title was found.")
+
+def generate_page(from_path, template_path, dest_path):
+    print(f"Generating page from {from_path} to {dest_path} using {template_path}")
+    with open(from_path, "r") as f:
+        from_f = f.read()
+    with open(template_path, "r") as f:
+        temp_f = f.read()
+    from_html = markdown_to_html_node(from_f).to_html()
+    title = extract_title(from_f)
+    temp_f = temp_f.replace("{{ Title }}", title)
+    temp_f = temp_f.replace("{{ Content }}", from_html)
+    dest_dir = os.path.dirname(dest_path)
+    os.makedirs(dest_dir, exist_ok=True)
+    with open(dest_path, "w") as f:
+        f.write(temp_f)
+
+def generate_pages_recursion(source_directory, template_path, target_directory):
+    source_list = os.listdir(source_directory)
+    for item in source_list:
+        from_path = os.path.join(source_directory, item)
+        dest_path = os.path.join(target_directory, item).replace(".md", ".html")
+        if os.path.isfile(from_path):
+            if not from_path.endswith(".md"):
+                continue
+            generate_page(from_path, template_path, dest_path)
+            print(f"Generating {from_path} to {dest_path}")
+        if os.path.isdir(from_path):
+            if not os.path.isdir(dest_path):
+                os.mkdir(dest_path)
+                print(f"Creating directory {dest_path}")
+            generate_pages_recursion(from_path, template_path, dest_path)

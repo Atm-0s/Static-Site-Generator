@@ -1,5 +1,5 @@
 import unittest
-from conversions import markdown_to_html_node, text_node_to_html_node, split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes, block_to_block_type
+from conversions import *
 from blocktype import BlockType
 from textnode import TextNode, TextType
 
@@ -222,3 +222,34 @@ the **same** even with inline stuff
             html,
             "<div><pre><code>This is text that _should_ remain\nthe **same** even with inline stuff\n</code></pre></div>",
         )
+
+    def test_extract_title(self):
+        md = """
+# Hello World!
+This is a test
+to see if I extract only the title
+properly
+        """
+        title = extract_title(md)
+        self.assertEqual(title, "Hello World!")
+
+    def test_extract_title_error(self):
+        md = """
+## Hello World!
+This is a test
+to see if I raise an error
+properly
+"""
+        with self.assertRaises(ValueError):
+            extract_title(md)
+
+    def test_extract_title_whitespace(self):
+        md = """
+#       Hello World!
+This is a test
+to see if
+all the whitespace is stripped
+properly
+"""
+        title = extract_title(md)
+        self.assertEqual(title, "Hello World!")
