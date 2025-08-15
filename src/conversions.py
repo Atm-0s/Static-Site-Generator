@@ -292,7 +292,7 @@ def extract_title(markdown):
             return header
     raise ValueError("No title was found.")
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
     with open(from_path, "r") as f:
         from_f = f.read()
@@ -302,12 +302,14 @@ def generate_page(from_path, template_path, dest_path):
     title = extract_title(from_f)
     temp_f = temp_f.replace("{{ Title }}", title)
     temp_f = temp_f.replace("{{ Content }}", from_html)
+    temp_f = temp_f.replace('href="/', f'href="{basepath}')
+    temp_f = temp_f.replace('src="/', f'src="{basepath}')
     dest_dir = os.path.dirname(dest_path)
     os.makedirs(dest_dir, exist_ok=True)
     with open(dest_path, "w") as f:
         f.write(temp_f)
 
-def generate_pages_recursion(source_directory, template_path, target_directory):
+def generate_pages_recursion(source_directory, template_path, target_directory, basepath):
     source_list = os.listdir(source_directory)
     for item in source_list:
         from_path = os.path.join(source_directory, item)
@@ -315,10 +317,10 @@ def generate_pages_recursion(source_directory, template_path, target_directory):
         if os.path.isfile(from_path):
             if not from_path.endswith(".md"):
                 continue
-            generate_page(from_path, template_path, dest_path)
+            generate_page(from_path, template_path, dest_path, basepath)
             print(f"Generating {from_path} to {dest_path}")
         if os.path.isdir(from_path):
             if not os.path.isdir(dest_path):
                 os.mkdir(dest_path)
                 print(f"Creating directory {dest_path}")
-            generate_pages_recursion(from_path, template_path, dest_path)
+            generate_pages_recursion(from_path, template_path, dest_path, basepath)
